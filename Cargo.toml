@@ -1,15 +1,21 @@
 [package]
-name = "fochan-rust"
+name = "fochan"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = { version = "0.5.0", features = ["json"]}
-rocket_contrib = "0.4.2"
+rocket = { version = "0.5", features = ["json"]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 winapi= { version = "0.3.9", features = ["winerror"] }
-diesel = { version = "2.1.0", features = ["postgres"]}
+diesel = { version = "2.1.0", features = ["postgres", "r2d2"]}
 dotenvy = "0.15"
+uuid="1.8"
+
+
+[dependencies.rocket_contrib]
+version = "0.4"
+default-features = false
+features = ["json"]
