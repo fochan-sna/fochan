@@ -14,6 +14,8 @@ use rocket::response::status::Created;
 use uuid::Uuid;
 use rand::random;
 use serde::{Serialize, Deserialize};
+use chrono::Utc;
+
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
@@ -55,7 +57,7 @@ struct GetMessagesResponse {
 #[derive(Serialize, Deserialize)]
 struct PostMessageRequest {
     user_id: Uuid,
-    topic_id: String,
+    topic_id: Uuid,
     message: String
 }
 
@@ -118,6 +120,23 @@ fn get_messages(request: Json<GetMessagesRequest>) -> Result<Json<GetMessagesRes
 
 #[post("/write_message", format = "json", data = "<request>")]
 fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
+    use self::schema::messages::dsl::*;
+
+    let connection = &mut establish_connection_pg();
+
+    // Generate a NaiveDateTime for the current time
+    let now = Utc::now();
+    let naive_datetime = now.naive_utc();
+
+    diesel::insert_into(messages)
+       .values((
+            topic_id.eq(request.topic_id),
+            user_id.eq(request.user_id),
+            content.eq(request.message.clone()),
+            sent_at.eq(naive_datetime),
+        ))
+       .execute(connection);
+
     Ok(Created::new("The message was written"))
 }
 
