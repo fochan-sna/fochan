@@ -9,11 +9,13 @@ use diesel::prelude::*;
 use rocket::serde::json::Json;
 use dotenvy::dotenv;
 use std::env;
+use chrono::Local;
 use rocket::response::Debug;
 use rocket::response::status::Created;
 use uuid::Uuid;
 use rand::random;
 use serde::{Serialize, Deserialize};
+use models::*;
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
@@ -30,15 +32,11 @@ pub fn establish_connection_pg() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-#[derive(Serialize, Deserialize)]
-struct GetUserIdResponse {
-    user_id: Uuid,
-    username: String
-}
+type GetUserIdResponse = User;
 
 #[derive(Serialize, Deserialize)]
 struct GetTopicsResponse {
-    topics: Vec<String>
+    topics: Vec<Topic>
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -55,23 +53,28 @@ struct GetMessagesResponse {
 #[derive(Serialize, Deserialize)]
 struct PostMessageRequest {
     user_id: Uuid,
-    topic_id: String,
+    topic_id: Uuid,
     message: String
 }
 
 
-#[derive(Serialize, Deserialize)]
-struct GetMessagesRequest {
-    topic_id: Uuid,
-    limit: i64
-}
 
 #[get("/get_user_id")]
 fn get_user_id() -> Result<Created<Json<GetUserIdResponse>>> {
+    use crate::schema::users;
+
+    let connection = &mut establish_connection_pg();
+
     let response = GetUserIdResponse {
         user_id: Uuid::new_v4(),
         username: random::<u32>().to_string()
     };
+
+    diesel::insert_into(users::table)
+        .values(&response)
+        .execute(connection)
+        .expect("Error while inserting the user");
+
     Ok(Created::new("/get_user_id").body(Json(response)))
 }
 
@@ -81,9 +84,7 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
 
     let connection = &mut establish_connection_pg();
 
-    let results: Vec<String> = topics
-        .select(name)
-        .load(connection)
+    let results = topics .select(Topic::as_select()) .load::<Topic>(connection)
         .expect("Error while fetching topics");
 
     let response = GetTopicsResponse {
@@ -92,17 +93,15 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
     Ok(Json(response))
 }
 
-#[get("/get_messages", format = "json", data = "<request>")]
-fn get_messages(request: Json<GetMessagesRequest>) -> Result<Json<GetMessagesResponse>> {
+#[get("/get_messages?<topic>&<limit>")]
+fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> {
     use self::schema::messages::dsl::*;
 
     let connection = &mut establish_connection_pg();
-    let topic_ID = request.topic_id.clone();
-    let limit = request.limit;
 
     let results = messages
         .select((user_id, content))
-        .filter(topic_id.eq(topic_ID))
+        .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
         .load::<Message>(connection)
@@ -118,6 +117,23 @@ fn get_messages(request: Json<GetMessagesRequest>) -> Result<Json<GetMessagesRes
 
 #[post("/write_message", format = "json", data = "<request>")]
 fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
+    use crate::schema::messages;
+
+    let connection = &mut establish_connection_pg();
+    
+    let message = models::Message {
+        message_id: Uuid::new_v4(),
+        topic_id: request.topic_id,
+        user_id: request.user_id,
+        content: request.message.clone(),
+        sent_at: Local::now().naive_local()
+    };
+
+    diesel::insert_into(messages::table)
+        .values(&message)
+        .execute(connection)
+        .expect("Failed to insert user");
+
     Ok(Created::new("The message was written"))
 }
 
