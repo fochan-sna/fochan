@@ -19,12 +19,12 @@ type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
 pub fn establish_connection_pg() -> PgConnection {
     dotenv().ok();
-    let database_host = env::var("DATABASE_HOST").expect("DATABASE_HOST is not set");
-    let database_port = env::var("DATABASE_PORT").expect("DATABASE_PORT is not set");
-    let database_name = env::var("DATABASE_NAME").expect("DATABASE_NAME is not set");
-    let database_user = env::var("DATABASE_USER").expect("DATABASE_USER is not set");
-    let database_password = env::var("DATABASE_PASSWORD").expect("DATABASE_PASSWORD is not set");
-    let database_url = format!("postgres://{}:{}@{}:{}/{}", database_user, database_password, database_host, database_port, database_name);
+    let database_host = env::var("POSTGRES_HOST").expect("POSTGRES_HOST is not set");
+    let database_port = env::var("POSTGRES_PORT").expect("POSTGRES_PORT is not set");
+    let database_name = env::var("POSTGRES_DB").expect("POSTGRES_DB is not set");
+    let database_user = env::var("POSTGRES_USER").expect("POSTGRES_USER is not set");
+    let database_pass = env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD is not set");
+    let database_url = format!("postgres://{}:{}@{}:{}/{}", database_user, database_pass, database_host, database_port, database_name);
     PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
