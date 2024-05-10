@@ -3,6 +3,7 @@
 pub mod models;
 pub mod schema;
 
+// use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use rocket::serde::json::Json;
@@ -18,10 +19,24 @@ type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
 
 pub fn establish_connection_pg() -> PgConnection {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    dotenv().ok(); // Load environment variables from.env file
+
+    // Access environment variables
+    let database_host = env::var("DATABASE_HOST").expect("DATABASE_HOST not set");
+    let database_port = env::var("DATABASE_PORT").expect("DATABASE_PORT not set");
+    let database_name = env::var("DATABASE_NAME").expect("DATABASE_NAME not set");
+    let database_user = env::var("DATABASE_USER").expect("DATABASE_USER not set");
+    let database_password = env::var("DATABASE_PASSWORD").expect("DATABASE_PASSWORD not set");
+
+    // Construct the DATABASE_URL
+    let database_url = format!("postgres://{}:{}@{}:{}/{}", database_user, database_password, database_host, database_port, database_name);
+
+    // Now you can use `database_url` to establish a connection
+    let connection = PgConnection::establish(&database_url)
+       .expect("Error connecting to database");
+
+    println!("Connected to database!");
+    connection
 }
 
 #[derive(Serialize, Deserialize)]
@@ -35,7 +50,7 @@ struct GetTopicsResponse {
     topics: Vec<String>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Queryable)]
 struct Message {
     user_id: Uuid,
     context: String
@@ -51,6 +66,13 @@ struct PostMessageRequest {
     user_id: Uuid,
     topic_id: String,
     message: String
+}
+
+
+#[derive(Serialize, Deserialize)]
+struct GetMessagesRequest {
+    topic_id: Uuid,
+    limit: i64
 }
 
 #[get("/get_user_id")]
@@ -79,13 +101,29 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
     Ok(Json(response))
 }
 
-#[get("/get_messages")]
-fn get_messages() -> Result<Json<GetMessagesResponse>> {
+#[get("/get_messages", format = "json", data = "<request>")]
+fn get_messages(request: Json<GetMessagesRequest>) -> Result<Json<GetMessagesResponse>> {
+    use self::schema::messages::dsl::*;
+
+    let connection = &mut establish_connection_pg();
+    let topic_ID = request.topic_id.clone();
+    let limit = request.limit;
+
+    let results = messages
+        .select((user_id, content))
+        .filter(topic_id.eq(topic_ID))
+        .order(sent_at.desc())
+        .limit(limit)
+        .load::<Message>(connection)
+        .expect("Error while fetching messages");
+
     let response = GetMessagesResponse {
-        messages: Vec::new()
+        messages: results
     };
+    
     Ok(Json(response))
 }
+
 
 #[post("/write_message", format = "json", data = "<request>")]
 fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
