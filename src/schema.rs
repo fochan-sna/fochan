@@ -3,25 +3,25 @@
 diesel::table! {
     messages (message_id) {
         message_id -> Uuid,
-        topic_id -> Nullable<Uuid>,
-        user_id -> Nullable<Uuid>,
-        content -> Nullable<Text>,
-        sent_at -> Nullable<Timestamp>,
+        topic_id -> Uuid,
+        user_id -> Uuid,
+        content -> Text,
+        sent_at -> Timestamp,
     }
 }
 
 diesel::table! {
     topics (topic_id) {
         topic_id -> Uuid,
-        name -> Nullable<Text>,
-        description -> Nullable<Text>,
+        name -> Text,
+        description -> Text,
     }
 }
 
 diesel::table! {
     users (user_id) {
         user_id -> Uuid,
-        username -> Nullable<Text>,
+        username -> Text,
     }
 }
 

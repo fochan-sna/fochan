@@ -5,12 +5,14 @@ pub mod schema;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use rocket::serde::{Serialize, Deserialize, json::Json};
+use rocket::serde::json::Json;
 use dotenvy::dotenv;
 use std::env;
 use rocket::response::Debug;
 use rocket::response::status::Created;
 use uuid::Uuid;
+use rand::random;
+use serde::{Serialize, Deserialize};
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
@@ -24,7 +26,8 @@ pub fn establish_connection_pg() -> PgConnection {
 
 #[derive(Serialize, Deserialize)]
 struct GetUserIdResponse {
-   user_id: Uuid
+    user_id: Uuid,
+    username: String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -52,14 +55,26 @@ struct PostMessageRequest {
 
 #[get("/get_user_id")]
 fn get_user_id() -> Result<Created<Json<GetUserIdResponse>>> {
-    let response = GetUserIdResponse { user_id: Uuid::new_v4() };
+    let response = GetUserIdResponse {
+        user_id: Uuid::new_v4(),
+        username: random::<u32>().to_string()
+    };
     Ok(Created::new("/get_user_id").body(Json(response)))
 }
 
-#[get("/topics")]
+#[get("/get_topics")]
 fn get_topics() -> Result<Json<GetTopicsResponse>> {
+    use self::schema::topics::dsl::*;
+
+    let connection = &mut establish_connection_pg();
+
+    let results: Vec<String> = topics
+        .select(name)
+        .load(connection)
+        .expect("Error while fetching topics");
+
     let response = GetTopicsResponse {
-        topics: Vec::new()
+        topics: results
     };
     Ok(Json(response))
 }
