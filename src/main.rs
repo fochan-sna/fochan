@@ -1,3 +1,4 @@
+#![feature(lazy_cell)]
 #[macro_use] extern crate rocket;
 
 pub mod models;
@@ -21,6 +22,7 @@ use ws::{WebSocket, Stream};
 use crossbeam::channel;
 use std::sync::LazyLock;
 use chrono::NaiveDateTime;
+use diesel::associations::HasTable;
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 type TopicChannelMap = LazyLock<HashMap<Uuid, (channel::Sender<models::Message>, channel::Receiver<models::Message>)>>;
@@ -165,18 +167,27 @@ fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
 
     let connection = &mut establish_connection_pg();
 
+    let insert_time = Local::now().naive_local();
+
     diesel::insert_into(messages)
        .values((
             topic_id.eq(request.topic_id),
             user_id.eq(request.user_id),
             content.eq(request.message.clone()),
-            sent_at.eq(Local::now().naive_local()),
+            sent_at.eq(insert_time),
         ))
-       .execute(connection);
+        .execute(connection)
+        .expect("Error while inserting message into DB");
+
+    let message = messages
+        .select(models::Message::as_select())
+        .filter(sent_at.eq(insert_time))
+        .load(connection)
+        .expect("Error while reading message from DB");
 
     let channel = GLOBAL_CHANNELS.get(&request.topic_id).unwrap();
     let sender = channel.0.clone();
-    sender.send(message).expect("Message wasn't sent to socket");
+    sender.send(message[0].clone()).expect("Message wasn't sent to socket");
 
     Ok(Created::new("The message was written"))
 }

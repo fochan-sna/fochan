@@ -12,7 +12,7 @@ use diesel::sql_types::Serial;
 
 // use crate::schema::messages::message_id as message_id;
 
-#[derive(Queryable, Debug, Selectable, Insertable, Serialize)]
+#[derive(Queryable, Debug, Selectable, Insertable, Serialize, Clone)]
 #[diesel(primary_key(message_id))]
 #[diesel(table_name = crate::schema::messages)]
 pub struct Message {
