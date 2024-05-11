@@ -22,15 +22,16 @@ jobs:
           compose-file: "./docker-compose.yml"
 
       - name: Testing
+        run: cargo test
         # Test via bash script
-        run: |
-          for script in tests/*.sh
-          do
-            echo "Script name: $script"
-            echo "Executing/Output:"
-            echo ""
-            bash $script || break
-            echo ""
-            echo ""
-          done
+        # run: |
+        #   for script in tests/*.sh
+        #   do
+        #     echo "Script name: $script"
+        #     echo "Executing/Output:"
+        #     echo ""
+        #     bash $script || break
+        #     echo ""
+        #     echo ""
+        #   done
 
