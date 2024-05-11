@@ -3,7 +3,8 @@
 pub mod models;
 pub mod schema;
 
-// use diesel::associations::HasTable;
+// use crate::schema::topics::dsl::topics;
+use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use rocket::serde::json::Json;
@@ -16,6 +17,7 @@ use uuid::Uuid;
 use rand::random;
 use serde::{Serialize, Deserialize};
 use models::*;
+use chrono::NaiveDateTime;
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
@@ -41,8 +43,10 @@ struct GetTopicsResponse {
 
 #[derive(Serialize, Deserialize, Queryable)]
 struct Message {
-    user_id: Uuid,
-    context: String
+    message_id: i32,
+    username: String,
+    content: String,
+    sent_at: NaiveDateTime
 }
 
 #[derive(Serialize, Deserialize)]
@@ -56,7 +60,6 @@ struct PostMessageRequest {
     topic_id: Uuid,
     message: String
 }
-
 
 
 #[get("/get_user_id")]
@@ -84,7 +87,9 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
 
     let connection = &mut establish_connection_pg();
 
-    let results = topics .select(Topic::as_select()) .load::<Topic>(connection)
+    let results = topics 
+        .select(Topic::as_select())
+        .load::<Topic>(connection)
         .expect("Error while fetching topics");
 
     let response = GetTopicsResponse {
@@ -96,12 +101,14 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
 #[get("/get_messages?<topic>&<limit>")]
 fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> {
     use self::schema::messages::dsl::*;
+    use self::schema::users::dsl::*;
 
     let connection = &mut establish_connection_pg();
 
     let results = messages
-        .select((user_id, content))
-        .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
+        .inner_join(users::table().on(schema::messages::user_id.eq(schema::users::user_id)))
+        .select((schema::messages::message_id, username, content, sent_at))
+        // .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
         .load::<Message>(connection)
@@ -117,22 +124,18 @@ fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> 
 
 #[post("/write_message", format = "json", data = "<request>")]
 fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
-    use crate::schema::messages;
+    use self::schema::messages::dsl::*;
 
     let connection = &mut establish_connection_pg();
-    
-    let message = models::Message {
-        message_id: Uuid::new_v4(),
-        topic_id: request.topic_id,
-        user_id: request.user_id,
-        content: request.message.clone(),
-        sent_at: Local::now().naive_local()
-    };
 
-    diesel::insert_into(messages::table)
-        .values(&message)
-        .execute(connection)
-        .expect("Failed to insert user");
+    diesel::insert_into(messages)
+       .values((
+            topic_id.eq(request.topic_id),
+            user_id.eq(request.user_id),
+            content.eq(request.message.clone()),
+            sent_at.eq(Local::now().naive_local()),
+        ))
+       .execute(connection);
 
     Ok(Created::new("The message was written"))
 }

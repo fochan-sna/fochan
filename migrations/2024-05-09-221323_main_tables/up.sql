@@ -1,17 +1,20 @@
 -- Your SQL goes here
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+
 CREATE TABLE IF NOT EXISTS Topics (
-    topic_id uuid PRIMARY KEY NOT NULL,
-    name TEXT  NOT NULL,
+    topic_id uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
     description TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Users (
-    user_id uuid PRIMARY KEY NOT NULL,
+    user_id uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     username TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Messages (
-    message_id uuid PRIMARY KEY NOT NULL,
+    message_id SERIAL PRIMARY KEY,
     topic_id uuid NOT NULL,
     user_id uuid NOT NULL,
     content TEXT NOT NULL,
