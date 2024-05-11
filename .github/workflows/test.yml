@@ -21,4 +21,5 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
 
-      - run: ./${{ env.TEST_PATH }}
+      - run: bash ${{ env.TEST_PATH }}
+
