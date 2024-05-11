@@ -42,6 +42,7 @@ struct GetTopicsResponse {
 
 #[derive(Serialize, Deserialize, Queryable)]
 struct Message {
+    user_id: Uuid,
     username: String,
     content: String,
     sent_at: NaiveDateTime
@@ -104,7 +105,7 @@ fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> 
 
     let results = messages
         .inner_join(users::table().on(schema::messages::user_id.eq(schema::users::user_id)))
-        .select((username, content, sent_at))
+        .select((schema::users::user_id, username, content, sent_at))
         // .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
