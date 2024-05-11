@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_PATH: "${{ github.workspace }}/tests/test_file" 
+  TEST_PATH: "${{ github.workspace }}/tests/test_file.sh" 
 
 jobs:
   test:
@@ -21,4 +21,4 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
 
-      - run: echo ${{ env.TEST_PATH }}
+      - run: ./${{ env.TEST_PATH }}
