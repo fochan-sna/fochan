@@ -3,7 +3,7 @@
 pub mod models;
 pub mod schema;
 
-// use diesel::associations::HasTable;
+use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use rocket::serde::json::Json;
@@ -16,6 +16,7 @@ use uuid::Uuid;
 use rand::random;
 use serde::{Serialize, Deserialize};
 use models::*;
+use chrono::NaiveDateTime;
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
 
@@ -41,8 +42,9 @@ struct GetTopicsResponse {
 
 #[derive(Serialize, Deserialize, Queryable)]
 struct Message {
-    user_id: Uuid,
-    context: String
+    username: String,
+    content: String,
+    sent_at: NaiveDateTime
 }
 
 #[derive(Serialize, Deserialize)]
@@ -96,12 +98,14 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
 #[get("/get_messages?<topic>&<limit>")]
 fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> {
     use self::schema::messages::dsl::*;
+    use self::schema::users::dsl::*;
 
     let connection = &mut establish_connection_pg();
 
     let results = messages
-        .select((user_id, content))
-        .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
+        .inner_join(users::table().on(schema::messages::user_id.eq(schema::users::user_id)))
+        .select((username, content, sent_at))
+        // .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
         .load::<Message>(connection)
