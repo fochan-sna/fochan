@@ -2,7 +2,7 @@
 
 diesel::table! {
     messages (message_id) {
-        message_id -> Uuid,
+        message_id -> Int4,
         topic_id -> Uuid,
         user_id -> Uuid,
         content -> Text,
