@@ -16,10 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Testing
+      - name: Building
         uses: hoverkraft-tech/compose-action@v1.5.1
         with:
           compose-file: "./docker-compose.yml"
 
-      - run: bash ${{ env.TEST_PATH }}
+      - name: Testing
+        # Test via bash script
+        run: bash ${{ env.TEST_PATH }}
 
