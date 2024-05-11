@@ -3,8 +3,7 @@
 pub mod models;
 pub mod schema;
 
-// use crate::schema::topics::dsl::topics;
-use diesel::associations::HasTable;
+// use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use rocket::serde::json::Json;
@@ -17,10 +16,33 @@ use uuid::Uuid;
 use rand::random;
 use serde::{Serialize, Deserialize};
 use models::*;
+use std::collections::HashMap;
+use ws::{WebSocket, Stream};
+use crossbeam::channel;
+use std::sync::LazyLock;
 use chrono::NaiveDateTime;
 
 type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
+type TopicChannelMap = LazyLock<HashMap<Uuid, (channel::Sender<models::Message>, channel::Receiver<models::Message>)>>;
 
+static GLOBAL_CHANNELS: TopicChannelMap = LazyLock::new(|| {
+    let mut channels = HashMap::new();
+
+    use self::schema::topics::dsl::*;
+    let connection = &mut establish_connection_pg();
+
+    let query_topics = topics
+    .select(topic_id)
+    .load::<Uuid>(connection)
+    .expect("Error while fetching topics");
+
+    for topic in query_topics {
+        let (sender, receiver) = channel::unbounded();
+        channels.insert(topic, (sender, receiver));
+    }
+
+    channels
+});
 
 pub fn establish_connection_pg() -> PgConnection {
     dotenv().ok();
@@ -62,6 +84,7 @@ struct PostMessageRequest {
 }
 
 
+
 #[get("/get_user_id")]
 fn get_user_id() -> Result<Created<Json<GetUserIdResponse>>> {
     use crate::schema::users;
@@ -87,7 +110,7 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
 
     let connection = &mut establish_connection_pg();
 
-    let results = topics 
+    let results = topics
         .select(Topic::as_select())
         .load::<Topic>(connection)
         .expect("Error while fetching topics");
@@ -121,6 +144,20 @@ fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> 
     Ok(Json(response))
 }
 
+#[get("/get_messages_stream?<topic_id>")]
+fn get_messages_stream(topic_id: String, _ws: WebSocket) -> Stream!['static] {
+    Stream! { _ws => {
+        let topic_id = Uuid::parse_str(topic_id.as_str()).unwrap();
+        let channel = GLOBAL_CHANNELS.get(&topic_id).unwrap();
+        let receiver = channel.1.clone();
+
+        loop {
+            let message = receiver.recv().unwrap();
+            let json_message = serde_json::to_string(&message).unwrap();
+            yield ws::Message::Text(json_message);
+        }
+    }}
+}
 
 #[post("/write_message", format = "json", data = "<request>")]
 fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
@@ -136,6 +173,10 @@ fn post_message(request: Json<PostMessageRequest>) -> Result<Created<String>> {
             sent_at.eq(Local::now().naive_local()),
         ))
        .execute(connection);
+
+    let channel = GLOBAL_CHANNELS.get(&request.topic_id).unwrap();
+    let sender = channel.0.clone();
+    sender.send(message).expect("Message wasn't sent to socket");
 
     Ok(Created::new("The message was written"))
 }
@@ -155,6 +196,7 @@ fn rocket() -> _ {
             get_user_id,
             get_topics,
             get_messages,
-            post_message
+            post_message,
+            get_messages_stream
         ])
 }
