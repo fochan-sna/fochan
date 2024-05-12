@@ -23,7 +23,6 @@ jobs:
 
       - name: Testing
         run: |
-          apt install rustc -y
           rustup install nightly
           cargo +nightly test
         # Test via bash script
