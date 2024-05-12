@@ -66,13 +66,22 @@ struct GetTopicsResponse {
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
-struct Message {
+struct UnstructuredMessage {
     message_id: i32,
     username: String,
     content: String,
     sent_at: NaiveDateTime,
     topic_id: Uuid,
     user_id: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Message {
+    message_id: i32,
+    content: String,
+    sent_at: NaiveDateTime,
+    topic_id: Uuid,
+    user: User,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -138,11 +147,22 @@ fn get_messages(limit: i64) -> Result<Json<GetMessagesResponse>> {
         // .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
-        .load::<Message>(connection)
+        .load::<UnstructuredMessage>(connection)
         .expect("Error while fetching messages");
 
+    let mut structured_messages = Vec::<Message>::new();
+    for message in results.iter() {
+        structured_messages.push(Message { 
+            message_id: message.message_id,
+            content: message.content.clone(),
+            sent_at: message.sent_at,
+            topic_id: message.topic_id,
+            user: User {user_id: message.user_id, username: message.username.clone()}
+        });
+    }
+
     let response = GetMessagesResponse {
-        messages: results
+        messages: structured_messages
     };
     
     Ok(Json(response))
