@@ -22,9 +22,10 @@ jobs:
       #     compose-file: "./docker-compose.yml"
 
       - name: Testing
-        run: apt install rustc -y
-        run: rustup install nightly
-        run: cargo +nightly test
+        run: |
+          apt install rustc -y
+          rustup install nightly
+          cargo +nightly test
         # Test via bash script
         # run: |
         #   for script in tests/*.sh
