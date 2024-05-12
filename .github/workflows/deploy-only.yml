@@ -1,0 +1,29 @@
+name: deplo only
+
+on: workflow_dispatch
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Connect to remote server and execute scripts
+      # https://github.com/appleboy/ssh-action
+      - name: Connect to remote server
+        uses: appleboy/ssh-action@v1.0.3            
+        with:
+          host: ${{ secrets.SERVER_ADDRESS }}
+          username: ${{ secrets.SERVER_LOGIN }}
+          password: ${{ secrets.SERVER_PASSWD }}
+          script: |
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/fochan-sna/fochan:main
+            
+
+
