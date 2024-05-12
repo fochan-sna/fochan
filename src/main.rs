@@ -1,10 +1,10 @@
 #![feature(lazy_cell)]
 #[macro_use] extern crate rocket;
+#[cfg(test)] mod tests;
 
 pub mod models;
 pub mod schema;
 
-// use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use rocket::serde::json::Json;
@@ -60,7 +60,7 @@ pub fn establish_connection_pg() -> PgConnection {
 
 type GetUserIdResponse = User;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct GetTopicsResponse {
     topics: Vec<Topic>
 }
@@ -123,8 +123,8 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
     Ok(Json(response))
 }
 
-#[get("/get_messages?<topic>&<limit>")]
-fn get_messages(topic: String, limit: i64) -> Result<Json<GetMessagesResponse>> {
+#[get("/get_messages?<limit>")]
+fn get_messages(limit: i64) -> Result<Json<GetMessagesResponse>> {
     use self::schema::messages::dsl::*;
     use self::schema::users::dsl::*;
 
