@@ -76,6 +76,6 @@ mod tests {
         let message = messages.messages.get(0).unwrap();
 
         assert_eq!(message.content, post_message_request.message);
-        assert_eq!(message.username, user.username);
+        assert_eq!(message.user.username, user.username);
     }
 }
