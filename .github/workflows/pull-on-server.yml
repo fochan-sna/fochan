@@ -15,8 +15,6 @@ jobs:
       contents: read
       packages: write
 
-    # Checking the completed tests
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
