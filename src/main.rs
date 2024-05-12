@@ -71,7 +71,8 @@ struct Message {
     username: String,
     content: String,
     sent_at: NaiveDateTime,
-    topic_id: Uuid
+    topic_id: Uuid,
+    user_id: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -133,7 +134,7 @@ fn get_messages(limit: i64) -> Result<Json<GetMessagesResponse>> {
 
     let results = messages
         .inner_join(users::table().on(schema::messages::user_id.eq(schema::users::user_id)))
-        .select((schema::messages::message_id, username, content, sent_at, topic_id))
+        .select((schema::messages::message_id, username, content, sent_at, topic_id, schema::users::user_id))
         // .filter(topic_id.eq(Uuid::parse_str(topic.as_str()).unwrap()))
         .order(sent_at.desc())
         .limit(limit)
