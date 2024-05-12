@@ -197,7 +197,7 @@ fn rocket() -> _ {
     dotenv().ok();
     let mut config = rocket::Config::default();
     config.address = env::var("ROCKET_HOST")
-        .unwrap_or("127.0.0.1".parse().unwrap()).parse().unwrap();
+        .unwrap_or("0.0.0.0".parse().unwrap()).parse().unwrap();
     config.port = env::var("ROCKET_PORT")
         .unwrap_or("8000".parse().unwrap()).parse().unwrap();
 
