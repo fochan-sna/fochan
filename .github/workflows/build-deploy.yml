@@ -84,7 +84,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWD }}
           script: |
             echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/monitorpc/test-foch:main            
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/fochan-sna/fochan:main
             
 
 
