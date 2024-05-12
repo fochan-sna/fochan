@@ -21,10 +21,6 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
 
-      - name: Checkout the containers
-        run: |
-          docker ps
-
       - name: Testing
         run: |
           rustup install nightly
