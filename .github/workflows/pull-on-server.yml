@@ -1,4 +1,4 @@
-name: deploy only
+name: pull on server
 
 on: workflow_dispatch
 
