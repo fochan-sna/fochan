@@ -83,12 +83,8 @@ jobs:
           username: ${{ secrets.SERVER_LOGIN }}
           password: ${{ secrets.SERVER_PASSWD }}
           script: |
-            cd fochan
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose down
-            git pull origin main
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose build
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose up -d
-            
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/monitorpc/test-foch:main            
             
 
 
