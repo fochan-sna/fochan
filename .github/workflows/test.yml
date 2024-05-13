@@ -1,6 +1,8 @@
 name: test
 
-on: workflow_dispatch
+on: 
+  push:
+    branches: [ "main" ]
 
 env:
   TESTS_PATH: "${{ github.workspace }}/tests" 
