@@ -62,7 +62,7 @@ type GetUserIdResponse = User;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct GetTopicsResponse {
-    topics: Vec<Topic>
+    topics: Vec<Topic>,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -96,7 +96,10 @@ struct PostMessageRequest {
     message: String
 }
 
-
+#[derive(Serialize, Deserialize)]
+struct GetTopicsLastMessagesResponse {
+    topics: Vec<(Topic, models::Message)>
+}
 
 #[get("/get_user_id")]
 fn get_user_id() -> Result<Created<Json<GetUserIdResponse>>> {
@@ -131,6 +134,30 @@ fn get_topics() -> Result<Json<GetTopicsResponse>> {
     let response = GetTopicsResponse {
         topics: results
     };
+    Ok(Json(response))
+}
+
+#[get("/get_topics_last_messages")]
+fn get_topics_last_messages() -> Result<Json<GetTopicsLastMessagesResponse>> {
+    use diesel::dsl::*;
+
+    let connection: &mut PgConnection = &mut establish_connection_pg();
+
+    let query = r#"
+    SELECT t.*, m.*
+    FROM topics t
+    INNER JOIN (
+        SELECT topic_id, MAX(sent_at) AS max_sent_at
+        FROM messages
+        GROUP BY topic_id
+    ) latest_msg on t.topic_id = latest_msg.topic_id
+    INNER JOIN messages m ON m.topic_id = latest_msg.topic_id AND m.sent_at = latest_msg.max_sent_at
+    "#;
+
+    let query = sql_query(query);
+    let results = query.load::<(models::Topic, models::Message)>(connection).unwrap();
+    let response = GetTopicsLastMessagesResponse { topics: results };
+
     Ok(Json(response))
 }
 
@@ -230,6 +257,7 @@ fn rocket() -> _ {
             get_topics,
             get_messages,
             post_message,
-            get_messages_stream
+            get_messages_stream,
+            get_topics_last_messages
         ])
 }
