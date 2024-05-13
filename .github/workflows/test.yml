@@ -14,13 +14,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Building
-        uses: hoverkraft-tech/compose-action@v1.5.1
-        with:
-          compose-file: "./docker-compose.yml"
+      # - name: Building
+      #   uses: hoverkraft-tech/compose-action@v1.5.1
+      #   with:
+      #     compose-file: "./docker-compose.yml"
 
       - name: Testing
         run: |
+          docker image pull postgres:latest
+          docker run --name db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:latest
           rustup install nightly
           cargo install diesel_cli --no-default-features --features postgres
           diesel setup --database-url='postgres://postgres:admin@localhost/database'
