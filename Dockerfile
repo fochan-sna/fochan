@@ -26,8 +26,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/fochan /usr/local/bin/fochan
 
-# COPY --from=builder /app/Rocket.toml .
-
 RUN apt-get update && apt-get install -y libssl-dev libpq-dev
 
 CMD ["fochan"]
