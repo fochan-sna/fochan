@@ -21,7 +21,8 @@ jobs:
 
       - name: Testing
         run: |
-          docker exec -i fochan-db-1 psql -U postgres database < example.sql
+          docker ps 
+          # docker exec -i fochan-db-1 psql -U postgres database < example.sql
           rustup install nightly
           cargo +nightly test
         # Test via bash script
