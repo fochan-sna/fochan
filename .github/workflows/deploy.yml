@@ -1,4 +1,4 @@
-name: pull on server
+name: deploy on server
 
 on: workflow_dispatch
 
@@ -56,7 +56,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  pull:
+  deploy:
     needs: build 
 
     runs-on: ubuntu-latest
@@ -76,12 +76,8 @@ jobs:
           username: ${{ secrets.SERVER_LOGIN }}
           password: ${{ secrets.SERVER_PASSWD }}
           script: |
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker exec 
-            # echo ${{ secrets.SERVER_PASSWD }} | 
-            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose down
-            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker rmi ghcr.io/fochan-sna/fochan:main
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/fochan-sna/fochan:main
-            
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash login.sh
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash pull.sh
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash deploy.sh
 
 
