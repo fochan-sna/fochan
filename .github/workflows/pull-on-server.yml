@@ -77,11 +77,11 @@ jobs:
           password: ${{ secrets.SERVER_PASSWD }}
           script: |
             echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose down
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker rmi ghcr.io/fochan-sna/fochan:main
+            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker exec 
+            # echo ${{ secrets.SERVER_PASSWD }} | 
+            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker compose down
+            # echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker rmi ghcr.io/fochan-sna/fochan:main
             echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/fochan-sna/fochan:main
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash make_dump.sh
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash deploy.sh
             
 
 
