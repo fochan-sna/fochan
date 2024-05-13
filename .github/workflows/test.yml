@@ -21,9 +21,10 @@ jobs:
 
       - name: Testing
         run: |
-          docker ps 
-          docker exec -i fochan-db-1 psql -U postgres database < example.sql
           rustup install nightly
+          cargo install diesel_cli --no-default-features --features postgres
+          diesel setup
+          diesel migration run --all
           cargo +nightly test
         # Test via bash script
         # run: |
