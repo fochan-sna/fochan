@@ -9,18 +9,10 @@ env:
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # - name: Building
-      #   uses: hoverkraft-tech/compose-action@v1.5.1
-      #   with:
-      #     compose-file: "./docker-compose.yml"
-
       - name: Testing
         run: |
           docker image pull postgres:latest
