@@ -17,7 +17,8 @@ jobs:
         run: |
           docker run --name db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=database -p 5432:5432 -d postgres:latest
           rustup install nightly
-          docker exec -i db psql -U postgres < example.sql
+          cargo install diesel_cli --no-features --features postgres
+          diesel setup --database-url='postgres://postgres:postgres@localhost/database'
           cargo +nightly test
         # Test via bash script
         # run: |
