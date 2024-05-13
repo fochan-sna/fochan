@@ -83,8 +83,8 @@ jobs:
           username: ${{ secrets.SERVER_LOGIN }}
           password: ${{ secrets.SERVER_PASSWD }}
           script: |
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            echo ${{ secrets.SERVER_PASSWD }} | sudo -S docker pull ghcr.io/fochan-sna/fochan:main
-            
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash login.sh
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash pull.sh
+            echo ${{ secrets.SERVER_PASSWD }} | sudo -S bash deploy.sh
 
 
