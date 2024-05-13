@@ -23,8 +23,8 @@ jobs:
         run: |
           rustup install nightly
           cargo install diesel_cli --no-default-features --features postgres
-          diesel setup
-          diesel migration run --all
+          diesel setup --database-url='postgres://localhost/database'
+          diesel migration run --all 
           cargo +nightly test
         # Test via bash script
         # run: |
