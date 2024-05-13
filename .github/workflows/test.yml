@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Testing
         run: |
-          docker run --name db -e POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres POSTGRES_DB=database -p 5432:5432 -d postgres:latest
+          docker run --name db -e POSTGRES_USER="postgres" POSTGRES_PASSWORD="postgres" POSTGRES_DB="database" -p 5432:5432 -d postgres:latest
           rustup install nightly
           docker exec -i db psql -U postgres < example.sql
           cargo +nightly test
